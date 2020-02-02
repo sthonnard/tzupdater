@@ -1,5 +1,5 @@
 # tzupdater
-R package for automatically downloading and compiling tz database from the IANA website.
+R package for automatically downloading and compiling tz database from the IANA website (https://www.iana.org/time-zones).
 
 This package allows you to download and compile any version of the IANA Time Zone Database (also known as Olson database) and make it current in your R session.
 This will NOT replace your system tz database.
