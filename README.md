@@ -9,7 +9,7 @@ It can be useful to download and compile the latest tz database because tz infor
 hence your system might not catch the latest version. Outdated tz database can cause troubles when converting from UTC to local time and vice-versa. You won't have any obious error, you will just get wrong UTC offset or zone name.
 
 # Installation
-library(devtools)
+library(devtools)\
 install_github("sthonnard/tzupdater")
 
 # Example of tz change
