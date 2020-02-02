@@ -1,0 +1,254 @@
+
+#' tzupdater: A tool for automatically downloading and compiling tz database from the IANA website.
+#'
+#' This package allows you to download and compile any version of the IANA Time Zone Database (also known as Olson database) and make it current
+#' in your R session.
+#' This will NOT replace your system tz database.
+#'
+#' Context:\cr
+#' It can be useful to download and compile the latest tz database because tz information are constently changing,
+#' hence your system might not catch the latest version. Outdated tz database can cause troubles when converting from UTC to local time
+#' and vice-versa. You won't have any obious error, you will just get wrong UTC offset or zone name.
+#'
+#' Prerequiste:\cr
+#' -On Windows you need the Time Zone Information Compiler (zic). You can get it by installing Cygwin (https://www.cygwin.com)\cr
+#'   (on macOS/Linux, zic is built-in)\cr
+#'  zic should be installed in C:\Cygwin\usr\sbin by default. If you installed Cygwin somewhere else, please add zic path to your user path or
+#'  specify the path in the function call.
+#'
+#'
+#' @section tzupdater functions:
+#' \strong{install_last_tz()}\cr
+#' Automatically get the latest version available and compile. If your tz database is already the latest, do nothing.
+#'
+#' \strong{get_last_published_tz()}\cr
+#' Get the name of the latest version available at IANA website.\cr
+#'
+#' \strong{get_active_tz_db()}\cr
+#' Get the active tz database version on your session.\cr
+#'
+#' \strong{install_tz(version_to_install)}\cr
+#' Download and install the IANA time zone specified in parameter.
+#'
+#'
+#' @docType package
+#' @name tzupdater
+#'
+
+source("R/hidden.R")
+
+
+#' install_tz
+#'
+#' Download and compile a tz database from the IANA website and make it active as an option.
+#' In case the tz db exists already, do not download again.
+#'
+#' @param tgt_version  Version to download and compile (eg 2019c, 2019a).
+#' @param zic_path  Optional for Windows: path to the zic compiler (if not in C:\\Cygwin\\usr\\sbin)
+#' @param target_folder Optional target folder. Default will be tzupdater/data/IANA_release as subdirectory of the first element found in the libPaths.
+#' @param show_zic_log  Optional: show logs from the zic compiler (TRUE/FALSE). Default FALSE.
+#' @param err_stop Stop on error (TRUE/FALSE). Default TRUE. Recommanded to TRUE.
+#' @param activate_tz Activate the tz database once installed. Default TRUE.
+#' @param verbose Print information to the console TRUE/FALSE. Default TRUE.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' # Install tz database 2019c
+#' install_tz("2019c")
+#'
+#' # Comparison between two IANA tz database
+#' # Get the IANA tz database 2016a
+#' install_tz("2016a")
+#' # Convert UTC datetime 2019-01-01 11:00:00 to local time in Istanbul
+#' as.POSIXct(format("2019-01-01 11:00:00", tz="UTC"),tz="Asia/Istanbul")
+#' 2019-01-01 11:00:00 EET
+#' # Now get IANA tz database 2019c
+#' install_tz("2019c")
+#' as.POSIXct(format("2019-01-01 11:00:00", tz="UTC"),tz="Asia/Istanbul")
+#' 2019-01-01 11:00:00 +03
+#' # This is because in 2016 Turkey was still observing EET in Winter. Now Turkey is UTC+3 (https://en.wikipedia.org/wiki/Time_in_Turkey)
+install_tz <- function(tgt_version = "2019c", zic_path = NA, target_folder = paste0(.libPaths()[1],"/","tzupdater/data/IANA_release"),
+                       show_zic_log = FALSE, err_stop = TRUE, activate_tz = TRUE, verbose = TRUE) {
+  # On Windows set default zic path to C:\\Cygwin\\usr\\sbin if zic_path not provided
+  if (is.na(zic_path) & .Platform$OS.type == "windows" & file.exists("C:\\Cygwin\\usr\\sbin"))
+  { # no zic path provided and on a Windows platform
+    zic_path <- "C:\\Cygwin\\usr\\sbin"
+    if (!(file.exists(paste0(zic_path,'\\zic.exe'))))
+    {
+      stop(paste0("zic.exe not found in ", zic_path))
+    }
+  }
+
+  dir.create(target_folder, showWarnings = FALSE, recursive = TRUE)
+  target_tar_file <- paste0(target_folder,"/tzdata",tgt_version,".tar.gz")
+
+  target_untar <- paste0(target_folder,"/",tgt_version)
+  target_compiled_version <- paste0(target_untar,"/compiled")
+  dir.create(target_compiled_version, showWarnings = FALSE)
+
+  # Download the IANA Time Zone Database except if it was already done
+  if (!(file.exists(target_tar_file)))
+  {
+    ret <- download.file(url=paste0("https://data.iana.org/time-zones/releases/tzdata",tgt_version,".tar.gz"),
+                  destfile=target_tar_file,
+                  quite=FALSE)
+    if(ret !=0)
+    {
+      stop(paste0("Cannot download ",tgt_version))
+    }
+
+  }
+
+  # Unzip the files and move them to a folder having IANA release name
+  untar(tarfile = target_tar_file, exdir = target_untar)
+
+  # Add zic to system path in case zic_path is set. (on Windows mostly)
+  if (!is.na(zic_path))
+  {
+    old_path <- Sys.getenv("PATH")
+    Sys.setenv(PATH = paste(old_path,zic_path, sep = ";"))
+  }
+
+  # Compile
+  for (zone in c("etcetera", "southamerica","northamerica","europe","africa","antarctica",
+                 "asia", "australasia", "backward", "pacificnew","systemv"))
+  {
+    if (verbose){print(paste("Compile",zone))}
+    zic_out <- data.frame(msg=system2("zic", paste0("-d ",paste0(target_compiled_version," ",
+                                 target_untar,"/",zone)),
+           stdout = TRUE,
+           stderr = TRUE))
+
+    zic_err <- subset(zic_out,!(grepl("warning: ", zic_out$msg)>0))
+    if (nrow(zic_out) > 0 & show_zic_log){
+      print(zic_out)
+    }
+    if (err_stop & nrow(zic_err) > 0 )
+    {
+      print(zic_err)
+      stop("zic command didn't work as expected! Operation cancelled. You can force the compilation by setting parameter err_stop to FALSE. ?tzupdater for details.")
+    }
+
+  }
+
+  cat(tgt_version, file = paste0(target_compiled_version,"/+VERSION"), append = FALSE)
+  if (verbose)
+  {
+    print(paste("IANA Time Zone Database", tgt_version, "installed in", gsub("\\./",getwd(),target_compiled_version)))
+  }
+  if (activate_tz)
+  {
+    # Set to current
+    .activate_tz(target_compiled_version, verbose)
+  }
+}
+
+
+#' get_active_tz_db
+#'
+#' Get the active tz database version
+#'
+#'
+#' @return Active tz database for the current session.
+#' @export
+#'
+#' @examples
+#' # Get the active tz database in your session:
+#' get_active_tz_db()
+get_active_tz_db <- function()
+{
+  return(attr(OlsonNames(),"Version"))
+}
+
+
+#' get_last_published_tz
+#'
+#' Get the name of the latest version available at IANA website.
+#'
+#' @return Latest IANA tz db version name or Unknown if not found.
+#' @export
+#'
+#' @examples
+#' # Will return for instance "2019c"
+#' get_last_published_tz()
+get_last_published_tz <- function()
+{
+  if (is.na(.last_tz_db))
+  { # Fetch on the IANA only once in the session
+    OlsonDb.lastver <- readLines("https://www.iana.org/time-zones")
+    OlsonDb.lastver <- gsub('</span','',strsplit(OlsonDb.lastver [grep('<span id="version">',OlsonDb.lastver)],'>')[[1]][2])
+    anno <- try(as.numeric(substring(OlsonDb.lastver, 1, 4)), silent = TRUE)
+    if (is.na(anno))
+    {
+      warning("Cannot retrieve latest tz database name from the IANA. The html structure might have changed.")
+      .last_tz_db <<- 'Unknown'
+    }
+    else
+    {
+      .last_tz_db <<- OlsonDb.lastver
+    }
+
+  }
+
+  return(.last_tz_db)
+
+}
+
+
+#' install_last_tz
+#'
+#' Install latest tz database if required, and make it active.\cr\cr
+#' Will stop in case it is not possible to know what the last version is.\cr
+#' If it happens browse IANA website at https://www.iana.org/time-zones and install last version with install_tz(version).\cr
+#' ?install_tz for details.
+#'
+#' @param zic_path  Optional for Windows: path to the zic compiler (if not in
+#'   C:\\Cygwin\\usr\\sbin).
+#' @param target_folder Optional target folder. Default will be
+#'   tzupdater/data/IANA_release as subdirectory of the first element found in
+#'   your libPaths.
+#' @param verbose Print information to the console TRUE/FALSE. Default TRUE.
+#'
+#' @return None.
+#' @export
+#'
+#' @examples
+#'
+#' # Get the latest version available and compile. If your tz database is already the latest, do nothing.
+#' install_last_tz()
+#'
+#' # Same, but more verbose.
+#' install_last_tz(verbose = TRUE)
+#'
+#' # On Windows: install latest tz database, with Cygwin installed in c:\\Cygwin.
+#' install_last_tz(zic_path="C:\\Cygwin\\usr\\sbin")
+install_last_tz <- function(zic_path = NA, target_folder = paste0(.libPaths()[1],"/","tzupdater/data/IANA_release"), verbose = TRUE)
+{
+  lastver <- get_last_published_tz()
+  if (lastver == "Unknown")
+  {
+    stop(paste0("Please fetch the name of the last IANA tz database at https://www.iana.org/time-zones and install it with tzupdater::install_tz in case it does not match with you active tz db.",get_active_tz_db()))
+  }
+
+
+  if(!(lastver==get_active_tz_db()) & !(file.exists(paste0(target_folder, "/", lastver)) ))
+  { # Local tz db outdated and fresher version does not exists in target_folder
+    if (verbose)
+    {
+      print(paste0("Local tz database ", get_active_tz_db(), " outdated. Will install ",lastver, " now." ))
+    }
+    install_tz(lastver, zic_path, target_folder, show_zic_log=FALSE, err_stop = TRUE, activate_tz = TRUE, verbose )
+  }
+  else if(!(lastver==get_active_tz_db()) & !(file.exists(paste0(target_folder, "/", lastver)) ))
+  { # Local tz db outdated and fresher version exists in target_folder
+    .activate_tz(paste0(target_folder, "/", lastver), verbose)
+    print(paste0("Local tz database ", get_active_tz_db(), " in folder ", target_folder, " is up to date."))
+  }
+  else if (verbose)
+  { # Nothin to do
+    print(paste0("Local tz database ", get_active_tz_db(), " is up to date."))
+  }
+}
+
