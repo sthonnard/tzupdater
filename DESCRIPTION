@@ -2,10 +2,10 @@ Package: tzupdater
 Type: Package
 Title: Automatically download and compile tz database from the IANA website
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
+Author: Sebastien Thonnard
+Maintainer: Sebastien Thonnard <sebastien.thonnard@icloud.com>
 Description: This package allows a user to download and compile any version of the IANA Time Zone Database (also known as Olson database) and make it current in his R session. This will NOT replace the system tz database. Changes can be undone by restarting a new session.
-License: What license is it under?
+License: MIT
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.0.2

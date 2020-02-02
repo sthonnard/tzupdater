@@ -35,7 +35,7 @@
 #' @name tzupdater
 #'
 
-source("R/hidden.R")
+source("./R/hidden.R")
 
 
 #' install_tz
