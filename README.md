@@ -14,11 +14,11 @@ install_github("sthonnard/tzupdater")
 
 # Example of tz change
 #Get the tz database 2016a\
-install_tz("2016a")\
+install_tz("2016a")
 
 #Convert UTC datetime 2019-01-01 11:00:00 to local time in Istanbul\
 as.POSIXct(format("2019-01-01 11:00:00", tz="UTC"),tz="Asia/Istanbul")\
-2019-01-01 11:00:00 EET\
+2019-01-01 11:00:00 EET
 
 #Now get IANA tz database 2019c\
 install_tz("2019c")\
