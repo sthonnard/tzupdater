@@ -15,6 +15,9 @@
 #'   (on macOS/Linux, zic is built-in)\cr
 #'  zic should be installed in C:\Cygwin\usr\sbin by default. If you installed Cygwin somewhere else, please add zic path to your user path or
 #'  specify the path in the function call.
+#'  
+#'  Bugs report:\cr
+#'  https://github.com/sthonnard/tzupdater
 #'
 #'
 #' @section tzupdater functions:
@@ -175,7 +178,7 @@ get_active_tz_db <- function()
 #' get_last_published_tz()
 get_last_published_tz <- function()
 {
-  if (is.na(.last_tz_db))
+  if (is.na(.tzupdater.globals$last_tz_db))
   { # Fetch on the IANA only once in the session
     OlsonDb.lastver <- readLines("https://www.iana.org/time-zones")
     OlsonDb.lastver <- gsub('</span','',strsplit(OlsonDb.lastver [grep('<span id="version">',OlsonDb.lastver)],'>')[[1]][2])
@@ -183,16 +186,16 @@ get_last_published_tz <- function()
     if (is.na(anno))
     {
       warning("Cannot retrieve latest tz database name from the IANA. The html structure might have changed.")
-      .last_tz_db <<- 'Unknown'
+      .tzupdater.globals$last_tz_db  <- 'Unknown'
     }
     else
     {
-      .last_tz_db <<- OlsonDb.lastver
+      .tzupdater.globals$last_tz_db <- OlsonDb.lastver
     }
 
   }
 
-  return(.last_tz_db)
+  return(.tzupdater.globals$last_tz_db)
 
 }
 

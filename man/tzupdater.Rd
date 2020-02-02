@@ -20,6 +20,9 @@ Prerequiste:\cr
   (on macOS/Linux, zic is built-in)\cr
  zic should be installed in C:\Cygwin\usr\sbin by default. If you installed Cygwin somewhere else, please add zic path to your user path or
  specify the path in the function call.
+ 
+ Bugs report:\cr
+ https://github.com/sthonnard/tzupdater
 }
 \section{tzupdater functions}{
 
