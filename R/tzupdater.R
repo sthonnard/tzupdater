@@ -48,7 +48,7 @@ source("./R/hidden.R")
 #'
 #' @param tgt_version  Version to download and compile (eg 2019c, 2019a).
 #' @param zic_path  Optional for Windows: path to the zic compiler (if not in C:\\Cygwin\\usr\\sbin)
-#' @param target_folder Optional target folder. Default will be tzupdater/data/IANA_release as subdirectory of the first element found in the libPaths.
+#' @param target_folder Optional target folder. Default will be tzupdater/data/IANA_release as in tempdir()
 #' @param show_zic_log  Optional: show logs from the zic compiler (TRUE/FALSE). Default FALSE.
 #' @param err_stop Stop on error (TRUE/FALSE). Default TRUE. Recommanded to TRUE.
 #' @param activate_tz Activate the tz database once installed. Default TRUE.
@@ -72,7 +72,7 @@ source("./R/hidden.R")
 #' as.POSIXct(format("2019-01-01 11:00:00", tz="UTC"),tz="Asia/Istanbul")
 #' 2019-01-01 11:00:00 +03
 #' # This is because in 2016 Turkey was still observing EET in Winter. Now Turkey is UTC+3 (https://en.wikipedia.org/wiki/Time_in_Turkey)
-install_tz <- function(tgt_version = "2019c", zic_path = NA, target_folder = paste0(.libPaths()[1],"/","tzupdater/data/IANA_release"),
+install_tz <- function(tgt_version = "2019c", zic_path = NA, target_folder = paste0(tempdir(),"/tzupdater/data/IANA_release"),
                        show_zic_log = FALSE, err_stop = TRUE, activate_tz = TRUE, verbose = TRUE) {
   # On Windows set default zic path to C:\\Cygwin\\usr\\sbin if zic_path not provided
   if (is.na(zic_path) & .Platform$OS.type == "windows" & file.exists("C:\\Cygwin\\usr\\sbin"))
@@ -89,19 +89,35 @@ install_tz <- function(tgt_version = "2019c", zic_path = NA, target_folder = pas
 
   target_untar <- paste0(target_folder,"/",tgt_version)
   target_compiled_version <- paste0(target_untar,"/compiled")
-  dir.create(target_compiled_version, showWarnings = FALSE)
+  #dir.create(target_compiled_version, showWarnings = TRUE)
 
   # Download the IANA Time Zone Database except if it was already done
   if (!(file.exists(target_tar_file)))
   {
-    ret <- download.file(url=paste0("https://data.iana.org/time-zones/releases/tzdata",tgt_version,".tar.gz"),
-                  destfile=target_tar_file,
-                  quite=FALSE)
-    if(ret !=0)
-    {
-      stop(paste0("Cannot download ",tgt_version))
+    tz_url <- paste0("https://data.iana.org/time-zones/releases/tzdata",tgt_version,".tar.gz")
+    tryCatch({
+      ret <- download.file(url = tz_url,
+                    destfile = target_tar_file,
+                    quiet = FALSE)
+      if(ret != 0)
+      {
+        stop(paste0("Download ", tgt_version, " at ", tz_url, " failed"))
+      }
+    },
+    warning, error=function(err) {
+      message(err$message)
+      if (grepl("404", err$message) == 1)
+      {
+        stop("Cannot fetch requested file. IANA website might have changed. Please try again later. If it does not work, please report the issue at https://github.com/sthonnard/tzupdater")
+      }else if (grepl("Couldn't resolve host name", err$message) == 1)
+      {
+        stop("IANA website is unreachable! Please try again later.\nIf it does not work, please report the issue at https://github.com/sthonnard/tzupdater")    
+      }else
+      {
+        stop(paste0("Cannot download ", tz_url))
+      }      
     }
-
+    )
   }
 
   # Unzip the files and move them to a folder having IANA release name
@@ -180,19 +196,25 @@ get_last_published_tz <- function()
 {
   if (is.na(.tzupdater.globals$last_tz_db))
   { # Fetch on the IANA only once in the session
-    OlsonDb.lastver <- readLines("https://www.iana.org/time-zones")
-    OlsonDb.lastver <- gsub('</span','',strsplit(OlsonDb.lastver [grep('<span id="version">',OlsonDb.lastver)],'>')[[1]][2])
-    anno <- try(as.numeric(substring(OlsonDb.lastver, 1, 4)), silent = TRUE)
-    if (is.na(anno))
-    {
-      warning("Cannot retrieve latest tz database name from the IANA. The html structure might have changed.")
+    tryCatch({
+      
+        OlsonDb.lastver <- readLines("https://www.iana.org/time-zones")
+        OlsonDb.lastver <- gsub('</span','',strsplit(OlsonDb.lastver [grep('<span id="version">',OlsonDb.lastver)],'>')[[1]][2])
+        anno <- try(as.numeric(substring(OlsonDb.lastver, 1, 4)), silent = TRUE)
+        if (is.na(anno))
+        {
+          warning("Cannot retrieve latest tz database name from the IANA. The html structure might have changed.")
+          .tzupdater.globals$last_tz_db  <- 'Unknown'
+        }
+        else
+        {
+          .tzupdater.globals$last_tz_db <- OlsonDb.lastver
+        }
+    }, warning,error=function(err){
+      message(err$message)
+      message("Cannot retrieve the name of the latest tz database at https://www.iana.org/time-zones.\nThis might be a temporary problem.\nIf you keep experiencing the issue please report at https://github.com/sthonnard/tzupdater")
       .tzupdater.globals$last_tz_db  <- 'Unknown'
-    }
-    else
-    {
-      .tzupdater.globals$last_tz_db <- OlsonDb.lastver
-    }
-
+    })
   }
 
   return(.tzupdater.globals$last_tz_db)
@@ -232,7 +254,7 @@ install_last_tz <- function(zic_path = NA, target_folder = paste0(.libPaths()[1]
   lastver <- get_last_published_tz()
   if (lastver == "Unknown")
   {
-    stop(paste0("Please fetch the name of the last IANA tz database at https://www.iana.org/time-zones and install it with tzupdater::install_tz in case it does not match with you active tz db.",get_active_tz_db()))
+    stop(paste0("Please fetch the name of the last IANA tz database at https://www.iana.org/time-zones and install it with tzupdater::install_tz in case it does not match with your active tz db, ",get_active_tz_db()))
   }
 
 
