@@ -7,7 +7,7 @@
 install_tz(
   tgt_version = "2019c",
   zic_path = NA,
-  target_folder = paste0(.libPaths()[1], "/", "tzupdater/data/IANA_release"),
+  target_folder = paste0(tempdir(), "/tzupdater/data/IANA_release"),
   show_zic_log = FALSE,
   err_stop = TRUE,
   activate_tz = TRUE,
@@ -17,9 +17,9 @@ install_tz(
 \arguments{
 \item{tgt_version}{Version to download and compile (eg 2019c, 2019a).}
 
-\item{zic_path}{Optional for Windows: path to the zic compiler (if not in C:\\Cygwin\\usr\\sbin)}
+\item{zic_path}{Optional for Windows: path to the zic compiler (if not in C:\Cygwin\usr\sbin)}
 
-\item{target_folder}{Optional target folder. Default will be tzupdater/data/IANA_release as subdirectory of the first element found in the libPaths.}
+\item{target_folder}{Optional target folder. Default will be tzupdater/data/IANA_release as in tempdir()}
 
 \item{show_zic_log}{Optional: show logs from the zic compiler (TRUE/FALSE). Default FALSE.}
 
@@ -50,5 +50,6 @@ as.POSIXct(format("2019-01-01 11:00:00", tz="UTC"),tz="Asia/Istanbul")
 install_tz("2019c")
 as.POSIXct(format("2019-01-01 11:00:00", tz="UTC"),tz="Asia/Istanbul")
 2019-01-01 11:00:00 +03
-# This is because in 2016 Turkey was still observing EET in Winter. Now Turkey is UTC+3 (https://en.wikipedia.org/wiki/Time_in_Turkey)
+# This is because in 2016 Turkey was still observing EET in Winter.
+# Now Turkey is UTC+3 (https://en.wikipedia.org/wiki/Time_in_Turkey).
 }

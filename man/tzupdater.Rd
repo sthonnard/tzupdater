@@ -3,7 +3,7 @@
 \docType{package}
 \name{tzupdater}
 \alias{tzupdater}
-\title{tzupdater: A tool for automatically downloading and compiling tz database from the IANA website.}
+\title{tzupdater: A tool for automatically download and compile tz database from the IANA website.}
 \description{
 This package allows you to download and compile any version of the IANA Time Zone Database (also known as Olson database) and make it current
 in your R session.
@@ -12,22 +12,23 @@ This will NOT replace your system tz database.
 \details{
 Context:\cr
 It can be useful to download and compile the latest tz database because tz information are constently changing,
-hence your system might not catch the latest version. Outdated tz database can cause troubles when converting from UTC to local time
-and vice-versa. You won't have any obious error, you will just get wrong UTC offset or zone name.
+hence your system might not have the latest version. Outdated tz database can cause troubles when converting from UTC to local time
+and vice-versa. You won't have any obvious error, you will just get wrong UTC offset or zone name.
 
 Prerequiste:\cr
--On Windows you need the Time Zone Information Compiler (zic). You can get it by installing Cygwin (https://www.cygwin.com)\cr
+-On Windows you need the Time Zone Information Compiler (zic). You can get it by installing Cygwin (\url{https://www.cygwin.com})\cr
   (on macOS/Linux, zic is built-in)\cr
  zic should be installed in C:\Cygwin\usr\sbin by default. If you installed Cygwin somewhere else, please add zic path to your user path or
  specify the path in the function call.
  
  Bugs report:\cr
- https://github.com/sthonnard/tzupdater
+ \url{https://github.com/sthonnard/tzupdater}
 }
 \section{tzupdater functions}{
 
 \strong{install_last_tz()}\cr
-Automatically get the latest version available and compile. If your tz database is already the latest, do nothing.
+Automatically get the latest version available and compile it. Once done make it active. 
+If your tz database is already the latest, do nothing.
 
 \strong{get_last_published_tz()}\cr
 Get the name of the latest version available at IANA website.\cr

@@ -6,7 +6,7 @@
 \usage{
 install_last_tz(
   zic_path = NA,
-  target_folder = paste0(.libPaths()[1], "/", "tzupdater/data/IANA_release"),
+  target_folder = paste0(tempdir(), "/tzupdater/data/IANA_release"),
   verbose = TRUE
 )
 }
@@ -15,8 +15,7 @@ install_last_tz(
 C:\\Cygwin\\usr\\sbin).}
 
 \item{target_folder}{Optional target folder. Default will be
-tzupdater/data/IANA_release as subdirectory of the first element found in
-your libPaths.}
+tzupdater/data/IANA_release as subdirectory of your temp dir.}
 
 \item{verbose}{Print information to the console TRUE/FALSE. Default TRUE.}
 }
