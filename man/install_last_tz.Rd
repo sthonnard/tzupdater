@@ -30,7 +30,8 @@ If it happens browse IANA website at https://www.iana.org/time-zones and install
 }
 \examples{
 
-# Get the latest version available and compile. If your tz database is already the latest, do nothing.
+# Get the latest version available and compile. 
+# If your tz database is already the latest, do nothing.
 install_last_tz()
 
 # Same, but more verbose.

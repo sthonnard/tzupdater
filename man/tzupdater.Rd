@@ -3,9 +3,9 @@
 \docType{package}
 \name{tzupdater}
 \alias{tzupdater}
-\title{tzupdater: A tool for automatically download and compile tz database from the IANA website.}
+\title{tzupdater: A Tool For Automatically Download And Compile Tz Database From The IANA Website.}
 \description{
-This package allows you to download and compile any version of the IANA Time Zone Database (also known as Olson database) and make it current
+Download and compile any version of the IANA Time Zone Database (also known as Olson database) and make it current
 in your R session.
 This will NOT replace your system tz database.
 }
@@ -18,7 +18,7 @@ and vice-versa. You won't have any obvious error, you will just get wrong UTC of
 Prerequiste:\cr
 -On Windows you need the Time Zone Information Compiler (zic). You can get it by installing Cygwin (\url{https://www.cygwin.com})\cr
   (on macOS/Linux, zic is built-in)\cr
- zic should be installed in C:\Cygwin\usr\sbin by default. If you installed Cygwin somewhere else, please add zic path to your user path or
+ zic should be installed in C:\\Cygwin\\usr\\sbin by default. If you installed Cygwin somewhere else, please add zic path to your user path or
  specify the path in the function call.
  
  Bugs report:\cr
