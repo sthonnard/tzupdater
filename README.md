@@ -9,7 +9,7 @@ It can be useful to download and compile the latest tz database because tz infor
 hence your system might not catch the latest version. Outdated tz database can cause troubles when converting from UTC to local time and vice-versa. You won't have any obvious error, you will just get wrong UTC offset or zone name.
 
 # Installation
-On Windows, please install Cygwin first! https://www.cygwin.com
+On Windows, please install Cygwin first! https://www.cygwin.com \
 Then you can install the latest version of tzupdater from github:
 ```
 library(devtools)
