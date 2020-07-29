@@ -15,11 +15,15 @@ It can be useful to download and compile the latest tz database because tz infor
 hence your system might not have the latest version. Outdated tz database can cause troubles when converting from UTC to local time
 and vice-versa. You won't have any obvious error, you will just get wrong UTC offset or zone name.
 
-Prerequiste:\cr
--On Windows you need the Time Zone Information Compiler (zic). You can get it by installing Cygwin (\url{https://www.cygwin.com})\cr
-  (on macOS/Linux, zic is built-in)\cr
- zic should be installed in C:\\Cygwin\\usr\\sbin by default. If you installed Cygwin somewhere else, please add zic path to your user path or
- specify the path in the function call.
+Prerequisite:\cr
+You need the timezone compiler (zic). \cr
+ -On Windows you can get it by installing Cygwin (\url{https://www.cygwin.com})\cr
+  zic should be installed in C:\\Cygwin\\usr\\sbin by default. If you installed Cygwin somewhere else, \cr
+  please add the zic path to your environment pariable PATH or specify the path in the function call.\cr
+ -On macOS zic is installed by default.\cr
+ -On Linux zic is generally already available. Otherwise it is part of package tzdata.\cr
+ Using Alpine Linux you can get it by running the following command:\cr
+ apk add tzdata
  
  Bugs report:\cr
  \url{https://github.com/sthonnard/tzupdater}
