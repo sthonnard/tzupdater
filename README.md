@@ -10,6 +10,7 @@ hence your system might not catch the latest version. Outdated tz database can c
 
 # Installation
 On Windows, please install Cygwin first! https://www.cygwin.com
+Then you can install the latest version of tzupdater from github:
 ```
 library(devtools)
 install_github("sthonnard/tzupdater")
