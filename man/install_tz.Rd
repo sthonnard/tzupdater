@@ -7,6 +7,7 @@
 install_tz(
   tgt_version = "2019c",
   zic_path = NA,
+  fail_if_zic_missing = FALSE,
   target_folder = paste0(tempdir(), "/tzupdater/data/IANA_release"),
   show_zic_log = FALSE,
   err_stop = TRUE,
@@ -19,6 +20,8 @@ install_tz(
 
 \item{zic_path}{Optional for Windows: path to the zic compiler (if not in C:\\Cygwin\\usr\\sbin)}
 
+\item{fail_if_zic_missing}{Stop execution if zic is missing (default FALSE, will only display a message)}
+
 \item{target_folder}{Optional target folder. Default will be tzupdater/data/IANA_release as in tempdir()}
 
 \item{show_zic_log}{Optional: show logs from the zic compiler (TRUE/FALSE). Default FALSE.}
@@ -27,7 +30,7 @@ install_tz(
 
 \item{activate_tz}{Activate the tz database once installed. Default TRUE.}
 
-\item{verbose}{Print information to the console TRUE/FALSE. Default TRUE.}
+\item{verbose}{Print additional information to the console TRUE/FALSE. Default TRUE.}
 }
 \description{
 Download and compile a tz database from the IANA website and make it active as an option.
