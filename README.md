@@ -43,7 +43,7 @@ as.POSIXct(format("2019-01-01 11:00:00", tz="UTC"),tz="Asia/Istanbul")
 ```
 Now get IANA tz database 2019c and convert the same time
 ```
-install_tz("2019c")\
+install_tz("2019c")
 as.POSIXct(format("2019-01-01 11:00:00", tz="UTC"),tz="Asia/Istanbul")
 2019-01-01 11:00:00 +03
 ```
