@@ -65,21 +65,10 @@ source("./R/hidden.R")
 #' # Install tz database 2019c
 #' install_tz("2019c")
 #'
-#' # Comparison between two IANA tz database
-#' # Get the IANA tz database 2016a
-#' install_tz("2016a")
-#' # Convert UTC datetime 2019-01-01 11:00:00 to local time in Istanbul
-#' as.POSIXct(format("2019-01-01 11:00:00", tz="UTC"),tz="Asia/Istanbul")
-#' # -> 2019-01-01 11:00:00 EET
-#' # Now get IANA tz database 2019c
-#' install_tz("2019c")
-#' as.POSIXct(format("2019-01-01 11:00:00", tz="UTC"),tz="Asia/Istanbul")
-#' # -> 2019-01-01 11:00:00 +03
-#' # This is because in 2016 Turkey was still observing EET in Winter.
-#' # Now Turkey is UTC+3 (https://en.wikipedia.org/wiki/Time_in_Turkey).
 install_tz <- function(tgt_version = "2019c", zic_path = NA, target_folder = paste0(tempdir(),"/tzupdater/data/IANA_release"),
                        show_zic_log = FALSE, err_stop = TRUE, activate_tz = TRUE, verbose = TRUE) {
   # On Windows set default zic path to C:\\Cygwin\\usr\\sbin if zic_path not provided
+  old_path <- Sys.getenv("PATH")
   if (is.na(zic_path) & .Platform$OS.type == "windows" & file.exists("C:\\Cygwin\\usr\\sbin"))
   { # no zic path provided and on a Windows platform
     zic_path <- "C:\\Cygwin\\usr\\sbin"
@@ -88,13 +77,29 @@ install_tz <- function(tgt_version = "2019c", zic_path = NA, target_folder = pas
       stop(paste0("zic.exe not found in ", zic_path))
     }
   }
+  # Add zic to system path in case zic_path is set. (on Windows mostly)
+  if (!is.na(zic_path))
+  {
+    Sys.setenv(PATH = paste(old_path,zic_path, sep = ";"))
+  }
+  # Test that zic is available
+  tryCatch(system2("zic"),warning=function(err){
+    print("zic not found on your system!")
+    if ( .Platform$OS.type == "windows"){print("Please install Cygwin from https://www.cygwin.com")}else
+    {
+      print("Please install Linux package tzdata")
+    }
+    Sys.setenv(PATH = old_path)
+    stop("Installation stopped")}
+    )
+  
 
   dir.create(target_folder, showWarnings = FALSE, recursive = TRUE)
   target_tar_file <- paste0(target_folder,"/tzdata",tgt_version,".tar.gz")
 
   target_untar <- paste0(target_folder,"/",tgt_version)
   target_compiled_version <- paste0(target_untar,"/compiled")
-  #dir.create(target_compiled_version, showWarnings = TRUE)
+
 
   # Download the IANA Time Zone Database except if it was already done
   if (!(file.exists(target_tar_file)))
@@ -106,11 +111,13 @@ install_tz <- function(tgt_version = "2019c", zic_path = NA, target_folder = pas
                     quiet = FALSE)
       if(ret != 0)
       {
+        Sys.setenv(PATH = old_path)
         stop(paste0("Download ", tgt_version, " at ", tz_url, " failed!"))
       }
     },
     warning, error=function(err) {
       message(err$message)
+      Sys.setenv(PATH = old_path)
       if (grepl("404", err$message) == 1)
       {
         stop("Cannot fetch requested file. IANA website might have changed. Please try again later.\nIf it does not work, please report the issue at https://github.com/sthonnard/tzupdater")
@@ -127,13 +134,6 @@ install_tz <- function(tgt_version = "2019c", zic_path = NA, target_folder = pas
 
   # Unzip the files and move them to a folder nammed with IANA release name
   utils::untar(tarfile = target_tar_file, exdir = target_untar)
-
-  # Add zic to system path in case zic_path is set. (on Windows mostly)
-  if (!is.na(zic_path))
-  {
-    old_path <- Sys.getenv("PATH")
-    Sys.setenv(PATH = paste(old_path,zic_path, sep = ";"))
-  }
 
   # Compile
   for (zone in c("etcetera", "southamerica","northamerica","europe","africa","antarctica",
@@ -152,6 +152,7 @@ install_tz <- function(tgt_version = "2019c", zic_path = NA, target_folder = pas
     if (err_stop & nrow(zic_err) > 0 )
     {
       print(zic_err)
+      Sys.setenv(PATH = old_path)
       stop("zic command didn't work as expected! Operation cancelled. You can force the compilation by setting parameter err_stop to FALSE. ?tzupdater for details.")
     }
 
@@ -167,6 +168,9 @@ install_tz <- function(tgt_version = "2019c", zic_path = NA, target_folder = pas
     # Set to current
     .activate_tz(target_compiled_version, verbose)
   }
+  
+  # Set the path as it was before adding the zic path
+  Sys.setenv(PATH = old_path)
 }
 
 
@@ -183,7 +187,7 @@ install_tz <- function(tgt_version = "2019c", zic_path = NA, target_folder = pas
 #' get_active_tz_db()
 get_active_tz_db <- function()
 {
-  return(attr(OlsonNames(),"Version"))
+  return(.get_active_tz_db())
 }
 
 

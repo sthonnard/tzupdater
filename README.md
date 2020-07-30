@@ -31,17 +31,17 @@ Download and compile the latest available tz database, and then make it active. 
 install_last_tz()
 ```
 # Example of tz change
-Get the tz database 2016a:\
+Get the tz database 2016a:
 ```
 install_tz("2016a")
 ```
 
-Convert UTC datetime 2019-01-01 11:00:00 to local time in Istanbul\
+Convert UTC datetime 2019-01-01 11:00:00 to local time in Istanbul
 ```
 as.POSIXct(format("2019-01-01 11:00:00", tz="UTC"),tz="Asia/Istanbul")
 2019-01-01 11:00:00 EET
 ```
-Now get IANA tz database 2019c and convert the same time\
+Now get IANA tz database 2019c and convert the same time
 ```
 install_tz("2019c")\
 as.POSIXct(format("2019-01-01 11:00:00", tz="UTC"),tz="Asia/Istanbul")
