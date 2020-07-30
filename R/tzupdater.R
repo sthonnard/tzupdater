@@ -72,7 +72,7 @@ install_tz <- function(tgt_version = "2019c", zic_path = NA,
                        fail_if_zic_missing = FALSE) {
   # On Windows set default zic path to C:\\Cygwin\\usr\\sbin if zic_path not provided
   old_path <- Sys.getenv("PATH")
-  zic_found <- TRUE
+  zic_found <- FALSE
   if (is.na(zic_path) & .Platform$OS.type == "windows" & file.exists("C:\\Cygwin\\usr\\sbin"))
   { # no zic path provided and on a Windows platform, set to default Cygwin path to zic
     zic_path <- "C:\\Cygwin\\usr\\sbin"
@@ -83,8 +83,10 @@ install_tz <- function(tgt_version = "2019c", zic_path = NA,
     Sys.setenv(PATH = paste(old_path,zic_path, sep = ";"))
   }
   # Test that zic is available
-  tryCatch(system2("zic"),warning=function(err){
-    zic_found <- FALSE
+  tryCatch({
+    system2("zic")
+    zic_found <- TRUE
+    },warning=function(err){
     print("zic not found on your system!")
     if ( .Platform$OS.type == "windows"){print("Please install Cygwin from https://www.cygwin.com")}else
     {
