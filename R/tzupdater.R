@@ -53,12 +53,12 @@ source("./R/hidden.R")
 #'
 #' @param tgt_version  Version to download and compile (eg 2019c, 2019a).
 #' @param zic_path  Optional for Windows: path to the zic compiler (if not in C:\\Cygwin\\usr\\sbin)
-#' @param fail_if_zic_missing Stop execution if zic is missing (default FALSE, will only display a message)
 #' @param target_folder Optional target folder. Default will be tzupdater/data/IANA_release as in tempdir()
 #' @param show_zic_log  Optional: show logs from the zic compiler (TRUE/FALSE). Default FALSE.
 #' @param err_stop Stop on error (TRUE/FALSE). Default TRUE. Recommanded to TRUE.
 #' @param activate_tz Activate the tz database once installed. Default TRUE.
 #' @param verbose Print additional information to the console TRUE/FALSE. Default TRUE.
+#' @param fail_if_zic_missing Stop execution if zic is missing (default FALSE, will only display a message)
 #'
 #' @export
 #'
@@ -66,9 +66,10 @@ source("./R/hidden.R")
 #' # Install tz database 2019c
 #' install_tz("2019c")
 #'
-install_tz <- function(tgt_version = "2019c", zic_path = NA, fail_if_zic_missing = FALSE, 
+install_tz <- function(tgt_version = "2019c", zic_path = NA,  
                        target_folder = paste0(tempdir(),"/tzupdater/data/IANA_release"),
-                       show_zic_log = FALSE, err_stop = TRUE, activate_tz = TRUE, verbose = TRUE) {
+                       show_zic_log = FALSE, err_stop = TRUE, activate_tz = TRUE, verbose = TRUE,
+                       fail_if_zic_missing = FALSE) {
   # On Windows set default zic path to C:\\Cygwin\\usr\\sbin if zic_path not provided
   old_path <- Sys.getenv("PATH")
   zic_found <- TRUE
