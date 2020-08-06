@@ -1,10 +1,10 @@
 Package: tzupdater
 Type: Package
 Title: Time Zone Database Updater
-Version: 0.1.0
+Version: 0.1.1
 Author: Sebastien Thonnard
 Maintainer: Sebastien Thonnard <sebastien.thonnard@icloud.com>
-Description: Download and compile any version of the 
+Description: Download and compile any version of the
   IANA Time Zone Database (also known as Olson database)
   and make it current in your R session.
   Beware: on Windows 'Cygwin' is required!
