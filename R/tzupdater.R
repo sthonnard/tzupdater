@@ -59,7 +59,7 @@ source("./R/hidden.R")
 #' @param activate_tz Activate the tz database once installed. Default TRUE.
 #' @param verbose Print additional information to the console TRUE/FALSE. Default TRUE.
 #' @param fail_if_zic_missing Stop execution if zic is missing (default FALSE, will only display a message)
-#'
+#' 
 #' @export
 #'
 #' @examples
@@ -70,118 +70,210 @@ install_tz <- function(tgt_version = "2019c", zic_path = NA,
                        target_folder = paste0(tempdir(),"/tzupdater/data/IANA_release"),
                        show_zic_log = FALSE, err_stop = TRUE, activate_tz = TRUE, verbose = TRUE,
                        fail_if_zic_missing = FALSE) {
-  # On Windows set default zic path to C:\\Cygwin\\usr\\sbin if zic_path not provided
-  old_path <- Sys.getenv("PATH")
-  zic_found <- FALSE
-  if (is.na(zic_path) & .Platform$OS.type == "windows" & file.exists("C:\\Cygwin\\usr\\sbin"))
-  { # no zic path provided and on a Windows platform, set to default Cygwin path to zic
-    zic_path <- "C:\\Cygwin\\usr\\sbin"
-  }
-  # Add zic to system path in case zic_path is set. (on Windows mostly)
-  if (!is.na(zic_path))
+  tryCatch(
   {
-    Sys.setenv(PATH = paste(old_path,zic_path, sep = ";"))
-  }
-  # Test that zic is available
-  tryCatch({
-    system2("zic")
-    zic_found <- TRUE
-    },warning=function(err){
-    print("zic not found on your system!")
-    if ( .Platform$OS.type == "windows"){print("Please install Cygwin from https://www.cygwin.com")}else
-    {
-      print("Please install Linux package tzdata")
+      
+    
+    # On Windows set default zic path to C:\\Cygwin\\usr\\sbin if zic_path not provided
+    old_path <- Sys.getenv("PATH")
+    zic_found <- FALSE
+    if (is.na(zic_path) & .Platform$OS.type == "windows" & file.exists("C:\\Cygwin\\usr\\sbin"))
+    { # no zic path provided and on a Windows platform, set to default Cygwin path to zic
+      zic_path <- "C:\\Cygwin\\usr\\sbin"
     }
-    Sys.setenv(PATH = old_path)
-    if (fail_if_zic_missing){
-      stop("Installation stopped!")
-    }else
+    # Add zic to system path in case zic_path is set. (on Windows mostly)
+    if (!is.na(zic_path))
     {
-      print(paste(tgt_version, "cannot be compiled because zic cannot be found."))
+      Sys.setenv(PATH = paste(old_path,zic_path, sep = ";"))
     }
-    }
-    )
-  
-  if (zic_found)
-  { # zic has been found
-    dir.create(target_folder, showWarnings = FALSE, recursive = TRUE)
-    target_tar_file <- paste0(target_folder,"/tzdata",tgt_version,".tar.gz")
-  
-    target_untar <- paste0(target_folder,"/",tgt_version)
-    target_compiled_version <- paste0(target_untar,"/compiled")
-  
-  
-    # Download the IANA Time Zone Database except if it was already done
-    if (!(file.exists(target_tar_file)))
-    {
-      tz_url <- paste0("https://data.iana.org/time-zones/releases/tzdata",tgt_version,".tar.gz")
-      tryCatch({
-        ret <- utils::download.file(url = tz_url,
-                      destfile = target_tar_file,
-                      quiet = FALSE)
-        if(ret != 0)
+    # Test that zic is available
+    tryCatch({
+      system2("zic")
+      zic_found <- TRUE
+      },warning=function(err){
+        print("zic not found on your system!")
+        if ( .Platform$OS.type == "windows"){print("Please install Cygwin from https://www.cygwin.com")}else
         {
-          Sys.setenv(PATH = old_path)
-          stop(paste0("Download ", tgt_version, " at ", tz_url, " failed!"))
+          print("Please install Linux package tzdata")
         }
-      },
-      warning, error=function(err) {
-        message(err$message)
         Sys.setenv(PATH = old_path)
-        if (grepl("404", err$message) == 1)
-        {
-          stop("Cannot fetch requested file. IANA website might have changed. Please try again later.\nIf it does not work, please report the issue at https://github.com/sthonnard/tzupdater")
-        }else if (grepl("Couldn't resolve host name", err$message) == 1)
-        {
-          stop("IANA website is unreachable! Please try again later.\nIf it does not work, please report the issue at https://github.com/sthonnard/tzupdater")    
+        if (fail_if_zic_missing){
+          stop("Installation stopped!")
         }else
         {
-          stop(paste0("Cannot download ", tz_url))
-        }      
+          print(paste(tgt_version, "cannot be compiled because zic cannot be found."))
+        }
+      },
+      error=function(e)
+      {
+        print(e$message)
+        message("Unexpected error when running zic!")
       }
       )
-    }
-  
-    # Unzip the files and move them to a folder nammed with IANA release name
-    utils::untar(tarfile = target_tar_file, exdir = target_untar)
-  
-    # Compile
-    for (zone in c("etcetera", "southamerica","northamerica","europe","africa","antarctica",
-                   "asia", "australasia", "backward", "pacificnew","systemv"))
-    {
-      if (verbose){print(paste("Compile",zone))}
-      zic_out <- data.frame(msg=system2("zic", paste0("-d ",paste0(target_compiled_version," ",
-                                   target_untar,"/",zone)),
-             stdout = TRUE,
-             stderr = TRUE))
-  
-      zic_err <- subset(zic_out,!(grepl("warning: ", zic_out$msg)>0))
-      if (nrow(zic_out) > 0 & show_zic_log){
-        print(zic_out)
-      }
-      if (err_stop & nrow(zic_err) > 0 )
-      {
-        print(zic_err)
-        Sys.setenv(PATH = old_path)
-        stop("zic command didn't work as expected! Operation cancelled. You can force the compilation by setting parameter err_stop to FALSE. ?tzupdater for details.")
-      }
-  
-    }
-  
-    cat(tgt_version, file = paste0(target_compiled_version,"/+VERSION"), append = FALSE)
-    if (verbose)
-    {
-      print(paste("IANA Time Zone Database", tgt_version, "installed in", gsub("\\./",getwd(),target_compiled_version)))
-    }
-    if (activate_tz)
-    {
-      # Set to current
-      .activate_tz(target_compiled_version, verbose)
-    }
     
-    # Set the path as it was before adding the zic path
-    Sys.setenv(PATH = old_path)
-  }
+    if (zic_found)
+    { # zic has been found
+      dir.create(target_folder, showWarnings = FALSE, recursive = TRUE)
+      target_tar_file <- paste0(target_folder,"/tzdata",tgt_version,".tar.gz")
+    
+      target_untar <- paste0(target_folder,"/",tgt_version)
+      target_compiled_version <- paste0(target_untar,"/compiled")
+    
+      iana_files_ok <- FALSE # Required files are there
+      # Download the IANA Time Zone Database except if it was already done
+      if (!(file.exists(target_tar_file)))
+      {
+        tz_url <- paste0(.tzupdater.globals$download_base_URL,"/tzdata",tgt_version,".tar.gz")
+        tryCatch({
+          ret <- utils::download.file(url = tz_url,
+                        destfile = target_tar_file,
+                        quiet = FALSE)
+          if(ret != 0)
+          {
+            Sys.setenv(PATH = old_path)
+            message(paste0("Download ", tgt_version, " at ", tz_url, " failed!"))
+          }
+          else
+          {
+            iana_files_ok <- TRUE
+          }
+        },
+        warning=function(err) {
+            iana_files_ok <- FALSE
+            Sys.setenv(PATH = old_path)
+            if (grepl("404", err$message) == 1)
+            {
+              message("Cannot fetch requested file (404 not found).")
+              last_tz <- get_last_published_tz()
+              if (last_tz == tgt_version){.iana_not_reachable()}
+              else
+              {
+                print(paste(tgt_version,"is not available!"))
+              }
+              
+            }else if (grepl("Couldn't resolve host name", err$message) == 1)
+            {
+              message("IANA website is unreachable!")   
+              .iana_not_reachable()
+            }else
+            {
+              message(err$message)
+              message(paste0("Cannot download ", tz_url))
+            }
+          }, 
+          error=function(err) {
+            iana_files_ok <- FALSE
+            message(err$message)
+            message("A critical issue occured, preventing to download the file.")
+          },
+        finally = {
+            tryCatch(
+              if (file.exists(target_tar_file) & !iana_files_ok){unlink(target_tar_file)},
+              warning=function(w){print(paste("+ Unexpected warning when removing",target_tar_file))},
+              error=function(e){print(paste("+ Unexpected error when removing",target_tar_file))}
+            )
+          }
+        )
+      }else
+      {
+        iana_files_ok <- TRUE
+      }
+      
+      if (iana_files_ok)
+      {
+      
+        # Unzip the files and move them to a folder nammed with IANA release name
+        utils::untar(tarfile = target_tar_file, exdir = target_untar)
+      
+        # Compile
+        compilation_done <- TRUE
+        compilated_zones <- 0
+        for (zone in c("etcetera", "southamerica","northamerica","europe","africa","antarctica",
+                       "asia", "australasia", "backward", "pacificnew","systemv", "factory"))
+        {
+          if (verbose){print(paste("Compile",zone))}
+          if (file.exists(paste0(target_untar,"/",zone)))
+          {
+            zic_out <- data.frame()
+            zic_err <- data.frame()
+            tryCatch(
+              {
+                zic_out <- data.frame(msg=system2("zic", paste0("-d ",paste0(target_compiled_version," ",
+                                           target_untar,"/",zone)),
+                     stdout = TRUE,
+                     stderr = TRUE))
+          
+                zic_err <- subset(zic_out,!(grepl("warning: ", zic_out$msg)>0))
+              },
+              warning=function(w)
+              {
+                # zic return status 1 should throw a warning
+                zic_err <- data.frame(warning_message=w$message)
+              },
+              error=function(e)
+              {
+                zic_err <- data.frame(error_message=e$message)
+              }
+            )
+            
+            if (nrow(zic_out) > 0 & show_zic_log){
+              print(zic_out)
+            }
+            if (err_stop & nrow(zic_err) > 0 )
+            {
+              print(zic_err)
+              compilation_done <- FALSE
+              Sys.setenv(PATH = old_path)
+              message("zic command didn't work as expected! Operation cancelled. You can force the compilation by setting parameter err_stop to FALSE. ?tzupdater for details.")
+              .iana_not_reachable()
+              break
+            }
+            compilated_zones <- compilated_zones + 1
+          }else
+          {
+            if (!(zone %in% c("backward", "pacificnew","systemv", "factory")))
+            {
+              print(paste0("  Expected ",zone," was not in ",tgt_version,"!"))            
+            }
+          }
+        } # For each zone
+        
+        if (compilation_done & compilated_zones > 0)
+        {
+          
+          cat(tgt_version, file = paste0(target_compiled_version,"/+VERSION"), append = FALSE)
+          if (verbose)
+          {
+            print(paste("IANA Time Zone Database", tgt_version, "installed in", gsub("\\./",getwd(),target_compiled_version)))
+          }
+          if (activate_tz)
+          {
+            # Set to current
+            .activate_tz(target_compiled_version, verbose)
+          }
+          
+          # Set the path as it was before adding the zic path
+          Sys.setenv(PATH = old_path)
+        }else
+        {
+          message(paste0("Cannot install tz",tgt_version,"!"))
+        }
+      }
+    }
+  },
+  warning=function(w)
+  {
+    print(w$message)
+    message("Unexpected warning when installing a given Time Zone Database From The IANA Website!")
+    .iana_not_reachable()
+  },
+  error=function(e)
+  {
+    print(e$message)
+    message("Unexpected error when installing a given Time Zone Database From The IANA Website!")
+    .iana_not_reachable()
+  }  
+  )
 }
 
 
@@ -205,7 +297,7 @@ get_active_tz_db <- function()
 #' get_last_published_tz
 #'
 #' Get the name of the latest version available at IANA website.
-#'
+#' 
 #' @return Latest IANA tz db version name or Unknown if not found.
 #' @export
 #'
@@ -214,31 +306,50 @@ get_active_tz_db <- function()
 #' get_last_published_tz()
 get_last_published_tz <- function()
 {
-  if (is.na(.tzupdater.globals$last_tz_db))
-  { # Fetch on the IANA only once in the session
-    tryCatch({
-      
-        OlsonDb.lastver <- readLines("https://www.iana.org/time-zones")
-        OlsonDb.lastver <- gsub('</span','',strsplit(OlsonDb.lastver [grep('<span id="version">',OlsonDb.lastver)],'>')[[1]][2])
-        anno <- try(as.numeric(substring(OlsonDb.lastver, 1, 4)), silent = TRUE)
-        if (is.na(anno))
-        {
-          warning("Cannot retrieve latest tz database name from the IANA. The html structure might have changed.")
-          .tzupdater.globals$last_tz_db  <- 'Unknown'
-        }
-        else
-        {
-          .tzupdater.globals$last_tz_db <- OlsonDb.lastver
-        }
-    }, warning,error=function(err){
-      message(err$message)
-      message("Cannot retrieve the name of the latest tz database at https://www.iana.org/time-zones.\nThis might be a temporary problem.\nIf you keep experiencing the issue please report at https://github.com/sthonnard/tzupdater")
-      .tzupdater.globals$last_tz_db  <- 'Unknown'
-    })
-  }
-
-  return(.tzupdater.globals$last_tz_db)
-
+  tryCatch(
+  {
+    if (is.na(.tzupdater.globals$last_tz_db))
+    { # Fetch on the IANA only once in the session
+      tryCatch({
+        
+          OlsonDb.lastver <- readLines(.tzupdater.globals$IANA_website, warn = FALSE)
+          OlsonDb.lastver <- gsub('</span','',strsplit(OlsonDb.lastver [grep('<span id="version">',OlsonDb.lastver)],'>')[[1]][2])
+          anno <- try(as.numeric(substring(OlsonDb.lastver, 1, 4)), silent = TRUE)
+          if (is.na(anno))
+          {
+            message("Cannot retrieve latest tz database name from the IANA. The html structure might have changed.")
+            .tzupdater.globals$last_tz_db  <- 'Unknown'
+          }
+          else
+          {
+            .tzupdater.globals$last_tz_db <- OlsonDb.lastver
+          }
+      }, warning=function(warnmsg){
+          message(warnmsg$message)
+          message("Warning when retrieving the name of the latest tz database at https://www.iana.org/time-zones.")
+          .iana_not_reachable()
+          .tzupdater.globals$last_tz_db  <- 'Unknown'}
+        ,error=function(err){
+          message(err$message)
+          message("Error when retrieving the name of the latest tz database at https://www.iana.org/time-zones.\nThis might be a temporary problem.\nIf you keep experiencing the issue please report at https://github.com/sthonnard/tzupdater")
+          .tzupdater.globals$last_tz_db  <- 'Unknown'})
+    }
+  
+  },
+  warning=function(w){
+    print(w$message)
+    .tzupdater.globals$last_tz_db <- "Unknown"
+    message("Unexpected warning when fetching latest Time Zone Database From The IANA Website!")
+    .iana_not_reachable()
+  },
+  error=function(e){
+    print(e$message)
+    .tzupdater.globals$last_tz_db <- "Unknown"
+    message("Unexpected error when fetching latest Time Zone Database From The IANA Website!")
+    .iana_not_reachable()
+  },
+  finally = {return(.tzupdater.globals$last_tz_db)}
+  )
 }
 
 
@@ -274,26 +385,23 @@ install_last_tz <- function(zic_path = NA, target_folder = paste0(tempdir(),"/tz
   lastver <- get_last_published_tz()
   if (lastver == "Unknown")
   {
-    stop(paste0("Please fetch the name of the last IANA tz database at https://www.iana.org/time-zones and install it with tzupdater::install_tz in case it does not match with your active tz db, ",get_active_tz_db()))
+    .iana_not_reachable()
+    message(paste0("Please fetch the name of the last IANA tz database at https://www.iana.org/time-zones and install it with tzupdater::install_tz in case it does not match with your active tz db, ",get_active_tz_db()))
   }
-
-
-  if(!(lastver==get_active_tz_db()) & !(file.exists(paste0(target_folder, "/", lastver)) ))
-  { # Local tz db outdated and fresher version does not exists in target_folder
-    if (verbose)
-    {
-      print(paste0("Local tz database ", get_active_tz_db(), " outdated. Will install ",lastver, " now." ))
+  else
+  {
+    if(!(lastver==get_active_tz_db()) )
+    { # Local tz db outdated and fresher version does not exists in target_folder
+      if (verbose)
+      {
+        print(paste0("Local tz database ", get_active_tz_db(), " outdated. Will install ",lastver, " now." ))
+      }
+      install_tz(lastver, zic_path, target_folder, show_zic_log=FALSE, err_stop = TRUE, activate_tz = TRUE, verbose )
     }
-    install_tz(lastver, zic_path, target_folder, show_zic_log=FALSE, err_stop = TRUE, activate_tz = TRUE, verbose )
-  }
-  else if(!(lastver==get_active_tz_db()) & !(file.exists(paste0(target_folder, "/", lastver)) ))
-  { # Local tz db outdated and fresher version exists in target_folder
-    .activate_tz(paste0(target_folder, "/", lastver), verbose)
-    print(paste0("Local tz database ", get_active_tz_db(), " in folder ", target_folder, " is up to date."))
-  }
-  else if (verbose)
-  { # Nothin to do
-    print(paste0("Local tz database ", get_active_tz_db(), " is up to date."))
+    else if (verbose)
+    { # Nothin to do
+      print(paste0("Local tz database ", get_active_tz_db(), " is up to date."))
+    }
   }
 }
 

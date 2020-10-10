@@ -2,6 +2,9 @@
 .tzupdater.globals <- new.env()
 .tzupdater.globals$last_tz_db <- NA
 
+.tzupdater.globals$IANA_website <- "https://www.iana.org/time-zones"
+.tzupdater.globals$download_base_URL <- "https://data.iana.org/time-zones/releases"
+
 # Get the active tz database insession - not allowing NULL:
 .get_active_tz_db <- function()
 {
@@ -24,4 +27,14 @@
   {
     print(paste("Active tz db:",.get_active_tz_db()))
   }
+}
+
+
+# Message when IANA cannot be reached
+.iana_not_reachable <- function()
+{
+  print("========================================================================================================================")
+  print("IANA website might be unreachable or has changed in a way that broke the package logic. Please try again later.")
+  print("If it still does not work later, please report the issue at https://github.com/sthonnard/tzupdater")
+  print("========================================================================================================================")
 }
