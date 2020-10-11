@@ -10,7 +10,7 @@
 {
   if (is.null(attr(OlsonNames(),"Version")))
   {
-    return ("-----")
+    return("-----")
   }
   else
   {
@@ -22,7 +22,7 @@
 # Activate a time zone database.
 .activate_tz <- function(tz_path, verbose=TRUE)
 {
-  Sys.setenv(TZDIR=tz_path)
+  Sys.setenv(TZDIR = tz_path)
   if (verbose)
   {
     print(paste("Active tz db:",.get_active_tz_db()))
