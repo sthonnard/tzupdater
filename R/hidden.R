@@ -35,6 +35,6 @@
 {
   print("========================================================================================================================")
   print("IANA website might be unreachable or has changed in a way that broke the package logic. Please try again later.")
-  print("If it still does not work later, please report the issue at https://github.com/sthonnard/tzupdater")
+  print("If it still doesn't work later, please report the issue at https://github.com/sthonnard/tzupdater")
   print("========================================================================================================================")
 }

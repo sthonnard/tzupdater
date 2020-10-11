@@ -387,7 +387,6 @@ install_last_tz <- function(zic_path = NA, target_folder = paste0(tempdir(),"/tz
   lastver <- get_last_published_tz()
   if (lastver == "Unknown")
   {
-    .iana_not_reachable()
     message(paste0("Please fetch the name of the last IANA tz database at https://www.iana.org/time-zones and install it with tzupdater::install_tz in case it does not match with your active tz db, ",get_active_tz_db()))
   }
   else
