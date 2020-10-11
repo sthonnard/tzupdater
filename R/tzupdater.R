@@ -266,13 +266,13 @@ install_tz <- function(tgt_version = "2019c", zic_path = NA,
   warning = function(w)
   {
     print(w$message)
-    message("Unexpected warning when installing a given Time Zone Database From The IANA Website!")
+    message("Unexpected warning when installing a given Time Zone Database from The IANA website!")
     .iana_not_reachable()
   },
   error = function(e)
   {
     print(e$message)
-    message("Unexpected error when installing a given Time Zone Database From The IANA Website!")
+    message("Unexpected error when installing a given Time Zone Database from The IANA website!")
     .iana_not_reachable()
   }  
   )
@@ -341,13 +341,13 @@ get_last_published_tz <- function()
   warning = function(w){
     print(w$message)
     .tzupdater.globals$last_tz_db <- "Unknown"
-    message("Unexpected warning when fetching latest Time Zone Database From The IANA Website!")
+    message("Unexpected warning when fetching latest Time Zone Database from The IANA website!")
     .iana_not_reachable()
   },
   error = function(e){
     print(e$message)
     .tzupdater.globals$last_tz_db <- "Unknown"
-    message("Unexpected error when fetching latest Time Zone Database From The IANA Website!")
+    message("Unexpected error when fetching latest Time Zone Database from The IANA website!")
     .iana_not_reachable()
   },
   finally = {return(.tzupdater.globals$last_tz_db)}
