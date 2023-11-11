@@ -1,7 +1,7 @@
 Package: tzupdater
 Type: Package
 Title: Time Zone Database Updater
-Version: 0.1.3
+Version: 0.1.4
 Author: Sebastien Thonnard
 Maintainer: Sebastien Thonnard <sebastien.thonnard@icloud.com>
 Description: Download and compile any version of the
