@@ -1,7 +1,7 @@
 Package: tzupdater
 Type: Package
 Title: Time Zone Database Updater
-Version: 0.1.4
+Version: 0.1.5
 Author: Sebastien Thonnard
 Maintainer: Sebastien Thonnard <sebastien.thonnard@icloud.com>
 Description: Download and compile any version of the
@@ -10,7 +10,7 @@ Description: Download and compile any version of the
   Beware: on Windows 'Cygwin' is required!
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
+LazyData: false
 RoxygenNote: 7.2.3
 Imports:
  utils
